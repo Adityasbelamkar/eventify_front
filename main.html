@@ -87,7 +87,7 @@
 
 <script>
 // ------------------ CONFIG --------------------
-const BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://eventify-backend-yjmb.onrender.com' : '';
+const BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ?'http://127.0.0.1:5000' : 'https://eventify-backend-yjmb.onrender.com' ;
 
 // ------------------ SAMPLE EVENTS --------------------
 const events = [
@@ -126,7 +126,7 @@ function getHashId(){ const m = location.hash.match(/#event-(\d+)/); return m ? 
   const email = localStorage.getItem('userEmail');
   if(!email){
     alert('Please log in first.');
-    location.href = 'login.html';
+    location.href = '/index.html';
   } else { userChip.textContent = email; }
 })();
 
@@ -219,7 +219,7 @@ window.addEventListener('hashchange', ()=>{ const id = getHashId(); if(id) viewE
 logoutBtn.addEventListener('click', () => {
   if(confirm('Log out of Eventify?')){
     localStorage.removeItem('userEmail');
-    location.href = 'login.html';
+    location.href = '/index.html';
   }
 });
 
