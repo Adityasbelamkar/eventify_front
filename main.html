@@ -1,5 +1,5 @@
 <!-- ============================
-     FILE: main.html (Qty + Status Pill + Robust Cancel)
+     FILE: main.html (Fetch Events + Qty + Status + Admin Delete + Robust Cancel)
      ============================ -->
 <!DOCTYPE html>
 <html lang="en">
@@ -60,6 +60,7 @@
   <h1>Eventify</h1>
   <div class="right">
     <span id="userChip" class="chip" title="Signed in as"></span>
+    <button id="adminToggle" type="button" title="Toggle admin">Admin Mode</button>
     <button id="viewBookingsBtn" type="button">View My Bookings</button>
     <button id="logoutBtn" type="button">Logout</button>
   </div>
@@ -74,15 +75,9 @@
     <label class="sr-only" for="cityFilter">Filter by city</label>
     <select id="cityFilter">
       <option value="All">All Cities</option>
-      <option>Bengaluru</option>
-      <option>Pune</option>
-      <option>Kolkata</option>
-      <option>Mumbai</option>
-      <option>Chennai</option>
-      <option>Delhi</option>
-      <option>Goa</option>
-      <option>Hyderabad</option>
-      <option>Jaipur</option>
+      <option>Bengaluru</option><option>Pune</option><option>Kolkata</option>
+      <option>Mumbai</option><option>Chennai</option><option>Delhi</option>
+      <option>Goa</option><option>Hyderabad</option><option>Jaipur</option>
       <option>Ahmedabad</option>
     </select>
 
@@ -100,26 +95,10 @@ const BASE_URL = (location.hostname === 'localhost' || location.hostname === '12
   ? 'http://127.0.0.1:5000'
   : 'https://eventify-backend-yjmb.onrender.com';
 
-// ------------------ SAMPLE EVENTS --------------------
-const events = [
-  {id:1,title:"Indie Rock Night",city:"Bengaluru",date:"2025-10-31",price:499,venue:"Blue Orchid Club",image:"https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=60",description:"An electrifying night of indie rock bands, bright lights, and pure energy."},
-  {id:2,title:"Startup Workshop",city:"Pune",date:"2025-11-15",price:299,venue:"CoWork Studio",image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=60",description:"Hands-on workshop on MVP and pitching."},
-  {id:3,title:"Classical Evening",city:"Kolkata",date:"2025-11-20",price:799,venue:"Heritage Hall",image:"https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1200&q=60",description:"An evening of classical maestros."},
-  {id:4,title:"Food Carnival",city:"Mumbai",date:"2025-11-22",price:199,venue:"Seaside Market",image:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=60",description:"Taste the best street food and desserts."},
-  {id:5,title:"Local Football Match",city:"Chennai",date:"2025-12-05",price:149,venue:"City Stadium",image:"https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=60",description:"Support local teams and enjoy the match."},
-  {id:6,title:"Tech Conference 2025",city:"Delhi",date:"2025-12-10",price:999,venue:"TechPark Arena",image:"https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=1200&q=60",description:"India’s biggest technology conference."},
-  {id:7,title:"Art & Craft Exhibition",city:"Pune",date:"2025-11-30",price:249,venue:"City Gallery",image:"https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=60",description:"Explore artisans and handcrafted art."},
-  {id:8,title:"Beach Music Fest",city:"Goa",date:"2025-12-20",price:599,venue:"Miramar Beach",image:"https://images.unsplash.com/photo-1521334884684-d80222895322?auto=format&fit=crop&w=1200&q=60",description:"Party by the waves with live DJs!"},
-  {id:9,title:"Hyderabad Comic Con",city:"Hyderabad",date:"2025-12-13",price:699,venue:"Hitex",image:"https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=60",description:"Cosplay, merch, panels, and tons of fandom fun."},
-  {id:10,title:"Jaipur Literature Fest Preview",city:"Jaipur",date:"2026-01-05",price:399,venue:"Pink City Hall",image:"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=60",description:"Author talks, poetry slams, and book signings."},
-  {id:11,title:"Stand-up Night",city:"Bengaluru",date:"2025-12-08",price:349,venue:"Indiranagar Club",image:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=60",description:"Fresh sets from rising comedians."},
-  {id:12,title:"Carnatic Concert",city:"Chennai",date:"2025-12-28",price:599,venue:"Music Academy",image:"https://images.unsplash.com/photo-1484591974057-265bb767ef71?auto=format&fit=crop&w=1200&q=60",description:"Soulful ragas by renowned artists."},
-  {id:13,title:"Street Photography Walk",city:"Mumbai",date:"2025-12-14",price:249,venue:"Fort Area",image:"https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1200&q=60",description:"Learn composition and storytelling on the streets."},
-  {id:14,title:"Data Science Meetup",city:"Ahmedabad",date:"2025-12-11",price:199,venue:"TechHub",image:"https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=1200&q=60",description:"Talks on ML ops, LLMs, and deployments."},
-  {id:15,title:"New Year Bash",city:"Goa",date:"2025-12-31",price:1299,venue:"Baga Beach",image:"https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=60",description:"Ring in 2026 with fireworks and DJs."}
-];
+// ------------------ State & DOM refs --------------------
+let EVENTS = [];
+let ADMIN_MODE = false;
 
-// ------------------ DOM --------------------
 const grid = document.getElementById('eventGrid');
 const detail = document.getElementById('eventDetail');
 const main = document.getElementById('mainContainer');
@@ -129,6 +108,7 @@ const searchBox = document.getElementById('searchBox');
 const userChip = document.getElementById('userChip');
 const viewBookingsBtn = document.getElementById('viewBookingsBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const adminToggle = document.getElementById('adminToggle');
 
 // ------------------ UTIL --------------------
 const inr = new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'});
@@ -137,10 +117,8 @@ function todayISO(){ const t = new Date(); const off = t.getTimezoneOffset(); co
 function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
 function fallbackImg(ev){ ev.target.src = 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600"><rect width="100%" height="100%" fill="#1e1e2f"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Poppins,Arial" font-size="24">Image unavailable</text></svg>`); }
 function setHash(id){ location.hash = `#event-${id}`; }
-function getHashId(){ const m = location.hash.match(/#event-(\d+)/); return m ? Number(m[1]) : null; }
+function getHashId(){ const m = location.hash.match(/#event-(.+)/); return m ? m[1] : null; }
 function getQty(b){ const keys=['quantity','qty','tickets','numTickets','ticketCount']; for(const k of keys){ const n=Number(b?.[k]); if(Number.isFinite(n)&&n>0) return n; } return null; }
-
-// Error banner helper
 function showErrorBanner(msg){
   let bar = document.getElementById('errBanner');
   if(!bar){
@@ -167,28 +145,60 @@ function showErrorBanner(msg){
   } else { userChip.textContent = email; }
 })();
 
-// ------------------ RENDER CARDS --------------------
+// ------------------ Admin toggle --------------------
+adminToggle.addEventListener('click', ()=>{
+  ADMIN_MODE = !ADMIN_MODE;
+  adminToggle.style.background = ADMIN_MODE ? '#f59e0b' : 'var(--accent)';
+  applyFilters();
+});
+
+// ------------------ Fetch events from backend --------------------
+async function fetchEvents(){
+  try{
+    const res = await fetch(`${BASE_URL}/api/events`);
+    const data = await res.json();
+    EVENTS = Array.isArray(data) ? data : [];
+  }catch(e){
+    console.error('Failed to load events', e);
+    EVENTS = [];
+  }
+  applyFilters();
+}
+
+// ------------------ Cards & Grid --------------------
 function createCard(e){
   const card = document.createElement('article');
   card.className = 'card'; card.setAttribute('tabindex','0');
 
   const img = document.createElement('img');
-  img.src = e.image; img.loading = 'lazy'; img.alt = e.title + ' banner';
+  img.src = e.image || '';
+  img.loading = 'lazy';
+  img.alt = (e.title || 'Event') + ' banner';
   img.addEventListener('error', fallbackImg);
   card.appendChild(img);
 
   const cont = document.createElement('div'); cont.className = 'card-content';
-  const h3 = document.createElement('h3'); h3.textContent = e.title; cont.appendChild(h3);
-  const meta = document.createElement('p'); meta.textContent = `${e.venue} • ${e.city}`; cont.appendChild(meta);
+  const h3 = document.createElement('h3'); h3.textContent = e.title || 'Untitled event'; cont.appendChild(h3);
+  const meta = document.createElement('p'); meta.textContent = `${e.venue || ''} • ${e.city || ''}`; cont.appendChild(meta);
   const date = document.createElement('p'); date.textContent = `Date: ${fmtDate(e.date)}`; cont.appendChild(date);
-  const price = document.createElement('p'); price.className='price'; price.textContent = inr.format(e.price); cont.appendChild(price);
+  const price = document.createElement('p'); price.className='price'; price.textContent = inr.format(e.price || 0); cont.appendChild(price);
 
   const btn = document.createElement('button'); btn.type='button'; btn.textContent='View';
-  btn.addEventListener('click', () => viewEvent(e.id));
+  btn.addEventListener('click', () => viewEvent(e._id || e.id));
   cont.appendChild(btn);
 
+  if(ADMIN_MODE){
+    const del = document.createElement('button');
+    del.type='button';
+    del.textContent='Delete Event';
+    del.style.background = '#ef4444';
+    del.style.marginLeft = '8px';
+    del.onclick = () => deleteEvent(e._id || e.id);
+    cont.appendChild(del);
+  }
+
   card.appendChild(cont);
-  card.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') viewEvent(e.id); });
+  card.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') viewEvent(e._id || e.id); });
   return card;
 }
 
@@ -203,20 +213,21 @@ function showEvents(list){
   list.forEach(e => grid.appendChild(createCard(e)));
 }
 
-// ------------------ FILTERS --------------------
+// ------------------ Filters --------------------
 function getFiltered(){
   const q = searchBox.value.trim().toLowerCase();
   const city = cityFilter.value;
   const date = dateFilter.value;
   const t = todayISO();
 
-  let list = events
-    .filter(e => e.date >= t) // show only upcoming by default
-    .sort((a,b) => a.date.localeCompare(b.date));
+  let list = EVENTS
+    .filter(e => (e.status || 'active') !== 'deleted')  // safety
+    .filter(e => (e.date || '') >= t)                  // upcoming only
+    .sort((a,b) => (a.date || '').localeCompare(b.date || ''));
 
-  if(city !== 'All') list = list.filter(e => e.city === city);
-  if(date) list = list.filter(e => e.date === date);
-  if(q) list = list.filter(e => e.title.toLowerCase().includes(q) || e.venue.toLowerCase().includes(q));
+  if(city !== 'All') list = list.filter(e => (e.city || '') === city);
+  if(date) list = list.filter(e => (e.date || '') === date);
+  if(q) list = list.filter(e => (e.title || '').toLowerCase().includes(q) || (e.venue || '').toLowerCase().includes(q));
   return list;
 }
 
@@ -226,21 +237,20 @@ cityFilter.addEventListener('change', applyFilters);
 dateFilter.addEventListener('change', applyFilters);
 searchBox.addEventListener('input', debounce(applyFilters, 150));
 
-// ------------------ DETAIL VIEW (with quantity) --------------------
+// ------------------ Detail view (with quantity) --------------------
 function viewEvent(id){
-  const e = events.find(ev => ev.id === id);
+  const e = EVENTS.find(ev => (ev._id || ev.id) == id);
   if(!e) return;
   main.style.display = 'none';
   detail.style.display = 'block';
   clear(detail);
 
-  const img = document.createElement('img'); img.src = e.image; img.alt = e.title + ' banner'; img.loading='lazy'; img.addEventListener('error', fallbackImg);
-  const h2 = document.createElement('h2'); h2.textContent = e.title;
-  const meta = document.createElement('p'); meta.textContent = `${e.venue} • ${e.city} • ${fmtDate(e.date)}`;
-  const desc = document.createElement('p'); desc.textContent = e.description;
-  const price = document.createElement('p'); price.className='price'; price.textContent = inr.format(e.price);
+  const img = document.createElement('img'); img.src = e.image || ''; img.alt = (e.title || 'Event') + ' banner'; img.loading='lazy'; img.addEventListener('error', fallbackImg);
+  const h2 = document.createElement('h2'); h2.textContent = e.title || 'Untitled event';
+  const meta = document.createElement('p'); meta.textContent = `${e.venue || ''} • ${e.city || ''} • ${fmtDate(e.date || '')}`;
+  const desc = document.createElement('p'); desc.textContent = e.description || '';
+  const price = document.createElement('p'); price.className='price'; price.textContent = inr.format(e.price || 0);
 
-  // Quantity selector
   const qtyWrap = document.createElement('div'); qtyWrap.className = 'qty-wrap';
   const qtyLabel = document.createElement('label'); qtyLabel.className='sr-only'; qtyLabel.setAttribute('for','ticketQty'); qtyLabel.textContent='Number of tickets';
   const minus = document.createElement('button'); minus.type='button'; minus.textContent='−';
@@ -253,7 +263,7 @@ function viewEvent(id){
   const hint = document.createElement('div'); hint.className='hint'; hint.textContent='Max 10 per booking (adjustable).';
 
   const book = document.createElement('button'); book.textContent='Book Now';
-  book.addEventListener('click', () => bookEvent(e.title, Number(qty.value || 1)));
+  book.addEventListener('click', () => bookEvent(e.title, Number(qty.value || 1), e._id || e.id));
   const back = document.createElement('button'); back.textContent='Back'; back.addEventListener('click', goBack);
 
   detail.append(img,h2,meta,desc,price,qtyWrap,hint,book,back);
@@ -261,11 +271,9 @@ function viewEvent(id){
 }
 
 function goBack(){ detail.style.display = 'none'; main.style.display = 'block'; location.hash = ''; }
-
-// Deep-link support via #event-<id>
 window.addEventListener('hashchange', ()=>{ const id = getHashId(); if(id) viewEvent(id); else goBack(); });
 
-// ------------------ AUTH ACTIONS --------------------
+// ------------------ Auth actions --------------------
 logoutBtn.addEventListener('click', () => {
   if(confirm('Log out of Eventify?')){
     localStorage.removeItem('userEmail');
@@ -273,8 +281,27 @@ logoutBtn.addEventListener('click', () => {
   }
 });
 
-// ------------------ BOOKINGS API (qty + status + robust cancel) --------------------
-async function bookEvent(title, quantity){
+// ------------------ Admin: delete event (soft) --------------------
+async function deleteEvent(eventId){
+  if(!confirm('Delete this event? (Soft delete)\nAll related bookings will be cancelled.')) return;
+  try{
+    const res = await fetch(`${BASE_URL}/api/events/${encodeURIComponent(eventId)}?mode=soft`, { method: 'DELETE' });
+    const data = await res.json();
+    if(!res.ok || !data?.ok){
+      alert(`Delete failed: ${data?.error || res.status}`);
+      return;
+    }
+    EVENTS = EVENTS.filter(ev => (ev._id || ev.id) !== eventId);
+    applyFilters();
+    alert('Event deleted (soft). Related bookings cancelled.');
+  }catch(e){
+    console.error(e);
+    alert('Delete failed (network/CORS?).');
+  }
+}
+
+// ------------------ Bookings API (qty + status + robust cancel) --------------------
+async function bookEvent(title, quantity, eventId){
   const userEmail = localStorage.getItem('userEmail');
   if(!userEmail){ alert('Session expired. Please log in again.'); return location.href = 'login.html'; }
   if(!Number.isFinite(quantity) || quantity < 1){ quantity = 1; }
@@ -283,10 +310,10 @@ async function bookEvent(title, quantity){
   const timeout = setTimeout(()=>controller.abort(), 10000);
 
   try{
-    // Send multiple aliases for maximum compatibility
     const body = {
       eventTitle: title,
       userEmail,
+      eventId,
       quantity,
       qty: quantity,
       tickets: quantity,
@@ -500,7 +527,6 @@ async function cancelBooking(booking, uiRefs){
   }
 }
 
-// Update row visuals to "Cancelled"
 function markCancelledUI(uiRefs){
   try{
     if(uiRefs?.badge){
@@ -522,7 +548,9 @@ function markCancelledUI(uiRefs){
 
 // ------------------ INIT --------------------
 (function init(){
-  showEvents(getFiltered());
+  const email = localStorage.getItem('userEmail');
+  userChip.textContent = email || '';
+  fetchEvents();
   const deepId = getHashId(); if(deepId) viewEvent(deepId);
 })();
 </script>
