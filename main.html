@@ -1,5 +1,5 @@
 <!-- ============================
-     FILE: main.html (Polished + Qty & Cancel)
+     FILE: main.html (Polished + Qty & Robust Cancel v3)
      ============================ -->
 <!DOCTYPE html>
 <html lang="en">
@@ -96,7 +96,7 @@ const BASE_URL = (location.hostname === 'localhost' || location.hostname === '12
   ? 'http://127.0.0.1:5000'
   : 'https://eventify-backend-yjmb.onrender.com';
 
-// ------------------ SAMPLE EVENTS (more added) --------------------
+// ------------------ SAMPLE EVENTS --------------------
 const events = [
   {id:1,title:"Indie Rock Night",city:"Bengaluru",date:"2025-10-31",price:499,venue:"Blue Orchid Club",image:"https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=60",description:"An electrifying night of indie rock bands, bright lights, and pure energy."},
   {id:2,title:"Startup Workshop",city:"Pune",date:"2025-11-15",price:299,venue:"CoWork Studio",image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=60",description:"Hands-on workshop on MVP and pitching."},
@@ -106,7 +106,6 @@ const events = [
   {id:6,title:"Tech Conference 2025",city:"Delhi",date:"2025-12-10",price:999,venue:"TechPark Arena",image:"https://images.unsplash.com/photo-1522199755839-a2bacb67c546?auto=format&fit=crop&w=1200&q=60",description:"India’s biggest technology conference."},
   {id:7,title:"Art & Craft Exhibition",city:"Pune",date:"2025-11-30",price:249,venue:"City Gallery",image:"https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&w=1200&q=60",description:"Explore artisans and handcrafted art."},
   {id:8,title:"Beach Music Fest",city:"Goa",date:"2025-12-20",price:599,venue:"Miramar Beach",image:"https://images.unsplash.com/photo-1521334884684-d80222895322?auto=format&fit=crop&w=1200&q=60",description:"Party by the waves with live DJs!"},
-  // New additions
   {id:9,title:"Hyderabad Comic Con",city:"Hyderabad",date:"2025-12-13",price:699,venue:"Hitex",image:"https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=60",description:"Cosplay, merch, panels, and tons of fandom fun."},
   {id:10,title:"Jaipur Literature Fest Preview",city:"Jaipur",date:"2026-01-05",price:399,venue:"Pink City Hall",image:"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=60",description:"Author talks, poetry slams, and book signings."},
   {id:11,title:"Stand-up Night",city:"Bengaluru",date:"2025-12-08",price:349,venue:"Indiranagar Club",image:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=60",description:"Fresh sets from rising comedians."},
@@ -135,6 +134,34 @@ function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
 function fallbackImg(ev){ ev.target.src = 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600"><rect width="100%" height="100%" fill="#1e1e2f"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#cbd5e1" font-family="Poppins,Arial" font-size="24">Image unavailable</text></svg>`); }
 function setHash(id){ location.hash = `#event-${id}`; }
 function getHashId(){ const m = location.hash.match(/#event-(\d+)/); return m ? Number(m[1]) : null; }
+
+// Normalize qty coming from backend (quantity|qty|tickets|numTickets|ticketCount)
+function getQty(b){
+  const keys = ['quantity','qty','tickets','numTickets','ticketCount'];
+  for(const k of keys){
+    const n = Number(b?.[k]);
+    if(Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+// Error banner helper
+function showErrorBanner(msg){
+  let bar = document.getElementById('errBanner');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'errBanner';
+    bar.style.background = '#7f1d1d';
+    bar.style.color = '#fecaca';
+    bar.style.border = '1px solid #ef4444';
+    bar.style.padding = '10px 12px';
+    bar.style.borderRadius = '8px';
+    bar.style.margin = '0 auto 12px';
+    bar.style.maxWidth = '700px';
+    detail.prepend(bar);
+  }
+  bar.textContent = msg;
+}
 
 // ------------------ SESSION GUARD --------------------
 (function guard(){
@@ -251,29 +278,43 @@ logoutBtn.addEventListener('click', () => {
   }
 });
 
-// ------------------ BOOKINGS API (quantity + cancel) --------------------
+// ------------------ BOOKINGS API (quantity + robust cancel) --------------------
 async function bookEvent(title, quantity){
   const userEmail = localStorage.getItem('userEmail');
   if(!userEmail){ alert('Session expired. Please log in again.'); return location.href = 'login.html'; }
-
   if(!Number.isFinite(quantity) || quantity < 1){ quantity = 1; }
 
   const controller = new AbortController();
   const timeout = setTimeout(()=>controller.abort(), 10000);
 
   try{
+    // Send multiple aliases for maximum compatibility with backend
+    const body = {
+      eventTitle: title,
+      userEmail,
+      quantity,
+      qty: quantity,
+      tickets: quantity,
+      numTickets: quantity,
+      ticketCount: quantity
+    };
+
     const res = await fetch(`${BASE_URL}/api/book`,{
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       signal:controller.signal,
-      body: JSON.stringify({ eventTitle:title, userEmail, quantity })
+      body: JSON.stringify(body)
     });
-    if(!res.ok) throw new Error('Bad response');
-    const payload = await res.json();
+
+    const text = await res.text();
+    if(!res.ok){
+      console.error('Book failed:', res.status, text);
+      throw new Error(text || 'Bad response');
+    }
     alert('🎟️ Booking confirmed and saved!');
   }catch(err){
     console.error(err);
-    alert('Booking failed — is the backend running?');
+    alert('Booking failed — check backend logs / CORS.');
   }finally{ clearTimeout(timeout); }
 }
 
@@ -288,13 +329,22 @@ async function viewBookings(){
   const userEmail = localStorage.getItem('userEmail');
   if(!userEmail){ alert('Please log in.'); return; }
 
+  // clear any previous error
+  const oldBanner = document.getElementById('errBanner');
+  if(oldBanner) oldBanner.remove();
+
   const controller = new AbortController();
   const timeout = setTimeout(()=>controller.abort(), 10000);
 
   try{
     const res = await fetch(`${BASE_URL}/api/bookings?userEmail=${encodeURIComponent(userEmail)}`, { signal: controller.signal });
-    if(!res.ok) throw new Error('Bad response');
-    const data = await res.json();
+    const text = await res.text();
+    if(!res.ok){
+      console.error('Fetch bookings failed:', res.status, text);
+      throw new Error(text || 'Bad response');
+    }
+    let data;
+    try { data = JSON.parse(text); } catch { data = []; }
 
     main.style.display = 'none';
     detail.style.display = 'block';
@@ -309,17 +359,33 @@ async function viewBookings(){
     } else {
       data.forEach(b => {
         const item = document.createElement('div');
-        item.style.background = '#1e1e2f'; item.style.padding='12px'; item.style.margin='10px 0'; item.style.borderRadius='8px'; item.style.display='flex'; item.style.justifyContent='space-between'; item.style.alignItems='center';
+        item.style.background = '#1e1e2f'; item.style.padding='12px'; item.style.margin='10px 0';
+        item.style.borderRadius='8px'; item.style.display='flex';
+        item.style.justifyContent='space-between'; item.style.alignItems='center';
 
         const left = document.createElement('div');
-        const title = document.createElement('strong'); title.textContent = b.eventTitle || 'Untitled event';
-        const meta = document.createElement('div'); meta.style.fontSize='12px'; meta.style.color='#cbd5e1';
-        const when = fmtBookingTime(b.date || b.createdAt);
-        const qty = b.quantity != null ? ` • Qty: ${b.quantity}` : '';
-        const emailLine = b.userEmail ? ` • ${b.userEmail}` : '';
-        meta.textContent = [when, qty, emailLine].filter(Boolean).join('');
 
-        left.append(title, meta);
+        const title = document.createElement('strong');
+        title.textContent = b.eventTitle || 'Untitled event';
+
+        const qtyVal = getQty(b);
+        const qtyText = qtyVal ? ` • Tickets: ${qtyVal}` : '';
+
+        const when = fmtBookingTime(b.date || b.createdAt);
+        const meta = document.createElement('div');
+        meta.style.fontSize='12px'; meta.style.color='#cbd5e1';
+        meta.textContent = [when, qtyText].filter(Boolean).join('');
+
+        // (optional) show id if present — helpful for backends that need it
+        const idVal = b._id || b.id || b.bookingId;
+        if(idVal){
+          const idLine = document.createElement('div');
+          idLine.style.fontSize='11px'; idLine.style.opacity='0.8';
+          idLine.textContent = `id: ${idVal}`;
+          left.append(title, meta, idLine);
+        } else {
+          left.append(title, meta);
+        }
 
         const right = document.createElement('div');
         const cancelBtn = document.createElement('button');
@@ -329,10 +395,9 @@ async function viewBookings(){
         cancelBtn.style.padding = '8px 12px';
         cancelBtn.style.borderRadius = '6px';
         cancelBtn.style.cursor = 'pointer';
-        cancelBtn.addEventListener('click', () => cancelBooking(b));
+        cancelBtn.addEventListener('click', () => cancelBooking(b, item));
 
         right.appendChild(cancelBtn);
-
         item.append(left, right);
         wrap.appendChild(item);
       });
@@ -343,59 +408,111 @@ async function viewBookings(){
     detail.append(h2, wrap, back);
   }catch(err){
     console.error(err);
-    alert('Failed to fetch bookings.');
+    showErrorBanner(`Failed to fetch bookings: ${err.message}`);
   }finally{ clearTimeout(timeout); }
 }
 
 /**
- * Try to cancel a booking robustly:
- * 1) If booking has id/_id -> DELETE /api/booking/:id
- * 2) Fallback -> POST /api/cancel with {bookingId,eventTitle,userEmail}
+ * Robust cancel:
+ * - Try DELETE on common routes if we have an id (_id | id | bookingId)
+ * - Also try DELETE with query (?bookingId=... or ?userEmail=&eventTitle=)
+ * - Fallback to POST cancel endpoints with aliases
+ * - Show detailed server errors (URL, status, text) in a red banner
  */
-async function cancelBooking(booking){
+async function cancelBooking(booking, rowEl){
   const userEmail = localStorage.getItem('userEmail');
   if(!userEmail){ alert('Please log in.'); return; }
   if(!confirm('Cancel this booking?')) return;
 
-  const id = booking._id || booking.id;
+  const id = booking._id || booking.id || booking.bookingId || null;
+  const title = booking.eventTitle || booking.title || null;
+
   const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 10000);
+  const timeout = setTimeout(()=>controller.abort(), 12000);
+
+  // DELETE candidates
+  const del = id ? [
+    `${BASE_URL}/api/booking/${encodeURIComponent(id)}`,
+    `${BASE_URL}/api/bookings/${encodeURIComponent(id)}`,
+    `${BASE_URL}/api/book/${encodeURIComponent(id)}`
+  ] : [];
+
+  // DELETE with query
+  const delQuery = [
+    id ? `${BASE_URL}/api/booking?bookingId=${encodeURIComponent(id)}` : null,
+    title ? `${BASE_URL}/api/booking?userEmail=${encodeURIComponent(userEmail)}&eventTitle=${encodeURIComponent(title)}` : null,
+    title ? `${BASE_URL}/api/bookings?userEmail=${encodeURIComponent(userEmail)}&eventTitle=${encodeURIComponent(title)}` : null,
+  ].filter(Boolean);
+
+  // POST cancel variants
+  const post = [
+    `${BASE_URL}/api/booking/cancel`,
+    `${BASE_URL}/api/bookings/cancel`,
+    `${BASE_URL}/api/cancel`,
+    `${BASE_URL}/api/deleteBooking`
+  ];
+
+  // payload with aliases
+  const payload = {
+    bookingId: id, id, _id: id,
+    userEmail,
+    eventTitle: title,
+    date: booking.date || booking.createdAt || null
+  };
+
+  async function tryReq(url, opts){
+    try{
+      const res = await fetch(url, opts);
+      const text = await res.text();
+      if(res.ok) return { ok:true, text };
+      const msg = `Cancel failed (${res.status}) at ${url} • ${text || 'No response text'}`;
+      console.warn(msg);
+      showErrorBanner(msg);
+      return { ok:false, text };
+    }catch(e){
+      const msg = `Cancel error at ${url} • ${e.message}`;
+      console.warn(msg);
+      showErrorBanner(msg);
+      return { ok:false, text:String(e) };
+    }
+  }
 
   try{
-    let ok = false;
-
-    // Attempt DELETE by id if present
-    if(id){
-      const delRes = await fetch(`${BASE_URL}/api/booking/${encodeURIComponent(id)}`, {
-        method:'DELETE',
-        signal: controller.signal
-      });
-      ok = delRes.ok;
+    // 1) DELETE /:id
+    for(const url of del){
+      const r = await tryReq(url, { method:'DELETE', signal: controller.signal });
+      if(r.ok){
+        if (rowEl?.parentNode) rowEl.parentNode.removeChild(rowEl);
+        alert('✅ Booking cancelled.');
+        return;
+      }
     }
-
-    // Fallback to POST /api/cancel
-    if(!ok){
-      const res = await fetch(`${BASE_URL}/api/cancel`,{
+    // 2) DELETE with query
+    for(const url of delQuery){
+      const r = await tryReq(url, { method:'DELETE', signal: controller.signal });
+      if(r.ok){
+        if (rowEl?.parentNode) rowEl.parentNode.removeChild(rowEl);
+        alert('✅ Booking cancelled.');
+        return;
+      }
+    }
+    // 3) POST cancel
+    for(const url of post){
+      const r = await tryReq(url, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({
-          bookingId: id || null,
-          eventTitle: booking.eventTitle,
-          userEmail
-        })
+        body: JSON.stringify(payload)
       });
-      ok = res.ok;
+      if(r.ok){
+        if (rowEl?.parentNode) rowEl.parentNode.removeChild(rowEl);
+        alert('✅ Booking cancelled.');
+        return;
+      }
     }
 
-    if(!ok) throw new Error('Cancel failed');
-    alert('✅ Booking cancelled.');
-    // Refresh bookings list
-    viewBookings();
-  }catch(err){
-    console.error(err);
-    alert('Cancellation failed.');
-  }finally{
+    showErrorBanner('Cancellation failed across all routes. Match the frontend call to your backend route/method (see banner logs).');
+  } finally {
     clearTimeout(timeout);
   }
 }
