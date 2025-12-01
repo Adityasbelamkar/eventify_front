@@ -97,12 +97,12 @@
 <script>
 // ------------------ CONFIG --------------------
 const BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-  ? 'http://127.0.0.1:5000'
+  ? 'http://127.0.0.1:8080'
   : 'https://eventify-backend-yjmb.onrender.com';
 
 // ------------------ SAMPLE EVENTS --------------------
 const events = [
-  {id:1,title:"Indie Rock Night",city:"Bengaluru",date:"2025-10-31",price:499,venue:"Blue Orchid Club",image:"https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=60",description:"An electrifying night of indie rock bands, bright lights, and pure energy."},
+  {id:1,title:"Indie Night",city:"Bengaluru",date:"2025-10-31",price:499,venue:"Blue Orchid Club",image:"https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=1200&q=60",description:"An electrifying night of indie rock bands, bright lights, and pure energy."},
   {id:2,title:"Startup Workshop",city:"Pune",date:"2025-11-15",price:299,venue:"CoWork Studio",image:"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1200&q=60",description:"Hands-on workshop on MVP and pitching."},
   {id:3,title:"Classical Evening",city:"Kolkata",date:"2025-11-20",price:799,venue:"Heritage Hall",image:"https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?auto=format&fit=crop&w=1200&q=60",description:"An evening of classical maestros."},
   {id:4,title:"Food Carnival",city:"Mumbai",date:"2025-11-22",price:199,venue:"Seaside Market",image:"https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=60",description:"Taste the best street food and desserts."},
